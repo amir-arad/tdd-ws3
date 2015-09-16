@@ -10,25 +10,20 @@ const REDIS_HOSTNAME = 'localhost';
 const STATUS = 'STATUS';
 
 var webdriverio = require('webdriverio');
-var options = { desiredCapabilities: { browserName: 'chrome' } };
+var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
-	STATUS_JOINING: 'joining',
-	STATUS_LOST: 'lost'
-}
+	JOINING: 'joining',
+	BIDDING: 'bidding',
+	LOST: 'lost'
+};
 var client;
 class AuctionSniperDriver{
-	// todo connect with browser to localhost http server, assert that html response shows expected status
 	constructor(){
-		client = webdriverio.remote(options);
-		this.first = true;
+		client = webdriverio.remote(options).init();
 	}
 	showsSniperStatus(statusText) {
-		if (this.first){
-			client = client.init();
-			this.first = false;
-		}
-		return client.url('localhost:8888')
+		return client.url('http://localhost:8888')
 		.then( () => client.getText('#status'))
 		.then(text => {
 			assert.equal(text, statusText, 'wrong status');
@@ -41,19 +36,20 @@ class AuctionSniperDriver{
 }
 
 class ApplicationRunner {
-	constructor() {
-		this.driver = new AuctionSniperDriver(1000);
-	}
 	startBiddingIn(auction) {
+		this.driver = new AuctionSniperDriver();
 		// start main program with some arguments
 		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, (error,stdout) => {
 			console.log(stdout);
 			console.log(error);
 		});
-		return this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
+		return this.driver.showsSniperStatus(statuses.JOINING);
 	}
 	showsSniperHasLostAuction () {
-		return this.driver.showsSniperStatus(statuses.STATUS_LOST); 
+		return this.driver.showsSniperStatus(statuses.LOST);
+	}
+	hasShownSniperIsBidding() {
+		return this.driver.showsSniperStatus(statuses.BIDDING);
 	}
 	stop(){
 		 this.runningServer.kill('SIGINT');
@@ -66,27 +62,45 @@ class FakeAuctionServer {
 	constructor(itemId) {
 		this.count = 0;
 		this.itemId = itemId;
-		this.redisListener = redis.createClient();
-		this.redisListener.on('message', (channel, msg) => {
-				this.count += 1;
+		this.publisher = redis.createClient();
+		this.listener = redis.createClient();
+		this.listener.on('message', (channel, msg) => {
+				//this.count += 1;
 				this.message = msg;
 		})
 	}
-	hasRecievedJoinRequestFromSniper(){
-        assert(this.count > 0, 'did not receive a message');
-		return new Promise((res, rej) =>{
+	hasReceivedJoinRequestFrom(bidder){
+		var messageBody = JSON.parse(this.message);
+		assert.equal(messageBody.type, 'join', 'bidder did not match');
+        assert.equal(messageBody.bidder, bidder, 'bidder did not match');
+		return new Promise((res) =>{
 			res();
 		});
 	}
+	hasReceivedBid(price, bidder) {
+		var messageBody = JSON.parse(this.message);
+		assert.equal(messageBody.type, 'bid', 'last message was not a bid');
+		assert.equal(messageBody.price, price, 'price did not match');
+		assert.equal(messageBody.bidder, bidder, 'bidder did not match');
+
+	}
+
+	reportPrice(price, increment, bidder){
+		return this.publisher.publish(this.itemId, JSON.stringify({price, increment, bidder, event: "price"}));
+	}
 	announceClosed(){
-		return redis.createClient().publish(this.itemId, "lost");
+		return this.publisher.publish(this.itemId, JSON.stringify({event: "closed"}));
 	}
 	startSellingItem() {
-		return this.redisListener.subscribe(this.itemId);
+		return this.listener.subscribe(this.itemId);
+	}
+	stop(){
+		this.listener.quit();
+		this.publisher.quit();
 	}
 }
 
-describe('the auction sniper', () =>{
+describe('E2E: auction sniper', () =>{
 	var auction;
 	var application;
 	beforeEach('auction sniper e2e',() => {
@@ -94,15 +108,29 @@ describe('the auction sniper', () =>{
 		application = new ApplicationRunner();
 	});
 
+	it('makes higher bid but loses', () => {
+		return auction.startSellingItem()
+			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
+
+			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
+			.then(() => application.hasShownSniperIsBidding())
+			.then(() => auction.hasReceivedBid(1098, SNIPER_ID))
+
+			.then(() => auction.announceClosed())
+			.then(() => application.showsSniperHasLostAuction());
+	});
+
 	it('joins an auction untill it closes', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
-			.then(() => auction.hasRecievedJoinRequestFromSniper())
+			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 			.then(() => auction.announceClosed())
 			.then(() => application.showsSniperHasLostAuction());
 	});	
 	
 	afterEach('something', () => {
 		application.stop();
+		auction.stop();
 	});
 });

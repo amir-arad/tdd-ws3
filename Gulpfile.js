@@ -25,5 +25,5 @@ gulp.task('watch', function () {
 
 gulp.task('test', ['transpile'], function () {
     return gulp.src('dist/test/**/*.spec.js', {read: false})
-        .pipe(mocha({reporter: process.env.npm_config_reporter || 'list'}))
+        .pipe(mocha({reporter: process.env.npm_config_reporter || 'nyan'}))
 });
