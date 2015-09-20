@@ -1,4 +1,5 @@
 require('source-map-support').install();
+var SNIPER_ID = 'sniper';
 
 export default function AuctionSniper(auction, listener){
 
@@ -7,7 +8,7 @@ export default function AuctionSniper(auction, listener){
 	};
 
 	this.currentPrice = function currentPrice(price, increment){
-		auction.bid(price + increment);
+		auction.bid(SNIPER_ID, price + increment);
 		listener.sniperBidding();
 	};
 }

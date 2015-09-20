@@ -8,6 +8,7 @@ var AuctionSniper = require('./AuctionSniper');
 var server;
 var state = 'joining';
 var redis = require('then-redis');
+var Auction = require('./Auction');
 var itemToSnipe = process.argv[2];
 var SNIPER_ID = 'sniper';
 
@@ -17,11 +18,7 @@ function main() {
 	var subscriber = redis.createClient();
 	subscriber.subscribe(itemToSnipe);
 
-	var auction = {
-		bid: function bid(price) {
-			publisher.publish(itemToSnipe, JSON.stringify({ bidder: SNIPER_ID, type: 'bid', price: price }));
-		}
-	};
+	var auction = new Auction(itemToSnipe);
 
 	var sniper = new AuctionSniper(auction, {
 		sniperLost: function sniperLost() {
@@ -33,6 +30,7 @@ function main() {
 	});
 	var translator = new AuctionMessageTranslator(sniper);
 	subscriber.on('message', translator.processMessage);
+	auction.join();
 
 	app.get('/', function (req, res) {
 		res.send('<html><head></head><body>\n\t\t<div id="status">' + state + '</div>\n\t\t</body></html>');
