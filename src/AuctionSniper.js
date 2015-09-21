@@ -12,8 +12,8 @@ export default function AuctionSniper(auction, listener){
 		listener.sniperLost();
 	};
 
-	this.currentPrice = function currentPrice(price, increment, bidder){
-		switch (bidder) {
+	this.currentPrice = function currentPrice(price, increment, source){
+		switch (source) {
 			case priceSource.FROM_SNIPER:
 				listener.sniperWinning();
 				break;

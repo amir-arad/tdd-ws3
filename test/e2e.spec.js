@@ -25,7 +25,6 @@ class AuctionSniperDriver{
 		.then( () => client.getText('#status'))
 		.then(text => {
 			assert.equal(text, statusText, 'wrong status');
-			console.log('Assert Passed!!');
 		});
 	}
 	stop(){
@@ -122,7 +121,7 @@ describe('E2E: auction sniper', () =>{
 			.then(() => application.showsSniperHasLostAuction());
 	});
 
-	it('makes a higher bid and wins', () => {
+	it('wins an auction by bidding higher', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn(ITEM_ID))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))

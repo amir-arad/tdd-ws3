@@ -19,7 +19,7 @@ var listener = {
         state = statuses.BIDDING;
     },
     sniperWinning: () => {
-    //    state = statuses.WINNING;
+        state = statuses.WINNING;
     }
 };
 
