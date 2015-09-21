@@ -20,6 +20,9 @@ var listener = {
     },
     sniperWinning: () => {
         state = statuses.WINNING;
+    },
+	sniperWon: () => {
+        state = statuses.WON;
     }
 };
 
