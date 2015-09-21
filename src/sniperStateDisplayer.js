@@ -1,33 +1,43 @@
 require('source-map-support').install();
 var express = require('express');
 
-var state = 'joining';
+var statuses = {
+    JOINING: 'joining',
+    BIDDING: 'bidding',
+    WINNING: 'winning',
+    LOST: 'lost',
+    WON: 'won'
+};
+
+var state = statuses.JOINING;
 
 var listener = {
     sniperLost: () => {
-        state = 'lost';
+        state = statuses.LOST;
     },
     sniperBidding: () => {
-        state = 'bidding';
+        state = statuses.BIDDING;
     },
     sniperWinning: () => {
-
+    //    state = statuses.WINNING;
     }
 };
 
-var app = express();
-app.get('/', function (req, res) {
-    res.send(`<html><head></head><body>
+function start() {
+	var app = express();
+	app.get('/', function (req, res) {
+		res.send(`<html><head></head><body>
 <div id="status">${state}</div>
 </body></html>`);
-});
-var server = app.listen(8888, function () {
-    var host = server.address().address;
-    var port = server.address().port;
+	});
+	var server = app.listen(8888, function () {
+		var host = server.address().address;
+		var port = server.address().port;
 
-    console.log('Example app listening at http://%s:%s', host, port);
-});
+		console.log('Example app listening at http://%s:%s', host, port);
+	});
+}
 
 export default {
-    listener
+	start, listener, statuses
 };

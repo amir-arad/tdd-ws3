@@ -8,17 +8,13 @@ var childProcess = require('child_process');
 const SNIPER_ID = 'sniper';
 const REDIS_HOSTNAME = 'localhost';
 const STATUS = 'STATUS';
+const ITEM_ID = 'item-5347';
 
 var webdriverio = require('webdriverio');
 var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
-var statuses = {
-	JOINING: 'joining',
-	BIDDING: 'bidding',
-	WINNING: 'winning',
-	LOST: 'lost',
-	WON: 'won'
-};
+var statuses = require('../src/sniperStateDisplayer').statuses;
+
 var client;
 class AuctionSniperDriver{
 	constructor(){
@@ -67,12 +63,10 @@ class ApplicationRunner {
 
 class FakeAuctionServer {
 	constructor(itemId) {
-		this.count = 0;
 		this.itemId = itemId;
 		this.publisher = redis.createClient();
 		this.listener = redis.createClient();
 		this.listener.on('message', (channel, msg) => {
-				//this.count += 1;
 				this.message = msg;
 		})
 	}
@@ -111,13 +105,13 @@ describe('E2E: auction sniper', () =>{
 	var auction;
 	var application;
 	beforeEach('auction sniper e2e',() => {
-		auction = new FakeAuctionServer('item-5347');		
+		auction = new FakeAuctionServer(ITEM_ID);		
 		application = new ApplicationRunner();
 	});
 
 	it('makes a higher bid but loses', () => {
 		return auction.startSellingItem()
-			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => application.startBiddingIn(ITEM_ID))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 
 			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
@@ -130,7 +124,7 @@ describe('E2E: auction sniper', () =>{
 
 	it('makes a higher bid and wins', () => {
 		return auction.startSellingItem()
-			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => application.startBiddingIn(ITEM_ID))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 
 			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
@@ -146,7 +140,7 @@ describe('E2E: auction sniper', () =>{
 
 	it('joins an auction untill it closes', () => {
 		return auction.startSellingItem()
-			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => application.startBiddingIn(ITEM_ID))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 			.then(() => auction.announceClosed())
 			.then(() => application.showsSniperHasLostAuction());
