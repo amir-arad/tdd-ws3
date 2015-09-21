@@ -17,6 +17,7 @@ describe('auction sniper', () => {
 		mockListener = {
 			sniperLost : sinon.spy(),
 			sniperBidding : sinon.spy(),
+			sniperWon : sinon.spy(),
 			sniperWinning : sinon.spy()
 		};
 		priceSource = {
@@ -25,9 +26,21 @@ describe('auction sniper', () => {
 		};
 		sniper = new AuctionSniper(mockAuction, mockListener);
 	});
-	it('reports lost when auction closes', () => {
+	it('reports lost when auction closes immediately', () => {
 		sniper.auctionClosed();
 		assert(mockListener.sniperLost.calledOnce, 'listener.sniperLost not called once');
+	});
+
+	it('reports lost if auction closes when bidding', () => {
+		let price = 1001;
+		let increment = 25;
+
+		sniper.currentPrice(price, increment, priceSource.FROM_OTHER_BIDDER);
+		sniper.auctionClosed();
+		assert(mockListener.sniperBidding.calledOnce, 'listener.sniperBidding not called once');
+		assert(mockListener.sniperLost.calledOnce, 'listener.sniperLost not called once');
+		assert(mockListener.sniperBidding.calledBefore(mockListener.sniperLost), 'listener.sniperBidding not called before listener.sniperLost');
+
 	});
 
 	it('bids higher and reports bidding when new price arrives', () => {
@@ -48,5 +61,17 @@ describe('auction sniper', () => {
 		sniper.currentPrice(price, increment, priceSource.FROM_SNIPER);
 
 		assert(mockListener.sniperWinning.calledOnce, 'listener.sniperWinning not called once');
-	})
+	});
+
+	it('reports won if auction closes when winning', function () {
+		let price = 123;
+		let increment = 45;
+
+		sniper.currentPrice(price, increment, priceSource.FROM_SNIPER);
+		sniper.auctionClosed();
+
+		assert(mockListener.sniperWinning.calledOnce, 'listener.sniperWinning not called once');
+		assert(mockListener.sniperWon.calledOnce, 'listener.sniperWon not called once');
+		assert(mockListener.sniperWinning.calledBefore(mockListener.sniperWon), 'listener.sniperWinning not called before listener.sniperWon');
+	});
 });
