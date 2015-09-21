@@ -3,6 +3,9 @@ var assert = require('chai').assert;
 var sinon = require('sinon');
 var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
 
+const SNIPER_ID = 'sniper';
+const priceSource = AuctionMessageTranslator.priceSource;
+
 describe('auction message translator', () => {
 	const UNUSED_CHANNEL = null;
 	let mockListener;
@@ -12,7 +15,7 @@ describe('auction message translator', () => {
 			auctionClosed : sinon.spy(),
 			currentPrice: sinon.spy()
 		};
-		translator = new AuctionMessageTranslator(mockListener);
+		translator = new AuctionMessageTranslator(SNIPER_ID, mockListener);
 	});
 	it('notifies auction closed when close message received', () => {
 		const message = JSON.stringify({event:'closed'});
@@ -20,10 +23,17 @@ describe('auction message translator', () => {
 		assert(mockListener.auctionClosed.calledOnce, 'listener auctionClosed not called once');
 	});
 
-	it('notifies bid details when current price message received', () => {
-		const message = JSON.stringify({event:'price', price: 192, increment: 7, bidder: 'someone else'});
+	it('notifies bid details when current price message received from other bidder', () => {
+		const message = JSON.stringify({event:'price', price: 192, increment: 7, bidder: 'hsgdqghsdfhsg'});
 		translator.processMessage(UNUSED_CHANNEL, message);
 		assert(mockListener.currentPrice.calledOnce, 'listener currentPrice not called once');
-		assert(mockListener.currentPrice.calledWithExactly(192, 7, 'someone else'), 'listener currentPrice was not called with correct parameters');
+		assert(mockListener.currentPrice.calledWithExactly(192, 7, priceSource.FROM_OTHER_BIDDER), 'listener currentPrice was not called with correct parameters');
+	});
+
+	it('notifies bid details when current price message received from sniper', () => {
+		const message = JSON.stringify({event:'price', price: 234, increment: 5, bidder: SNIPER_ID});
+		translator.processMessage(UNUSED_CHANNEL, message);
+		assert(mockListener.currentPrice.calledOnce, 'listener currentPrice not called once');
+		assert(mockListener.currentPrice.calledWithExactly(234, 5, priceSource.FROM_SNIPER), 'listener currentPrice was not called with correct parameters');
 	});
 });

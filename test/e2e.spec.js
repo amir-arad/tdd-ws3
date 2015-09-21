@@ -15,7 +15,9 @@ var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 var statuses = {
 	JOINING: 'joining',
 	BIDDING: 'bidding',
-	LOST: 'lost'
+	WINNING: 'winning',
+	LOST: 'lost',
+	WON: 'won'
 };
 var client;
 class AuctionSniperDriver{
@@ -51,11 +53,16 @@ class ApplicationRunner {
 	hasShownSniperIsBidding() {
 		return this.driver.showsSniperStatus(statuses.BIDDING);
 	}
+	hasShownSniperIsWinning() {
+		return this.driver.showsSniperStatus(statuses.WINNING);
+	}
+	showsSniperHasWonAuction() {
+		return this.driver.showsSniperStatus(statuses.WON);
+	}
 	stop(){
 		 this.runningServer.kill('SIGINT');
          this.driver.stop();
 	}
-	
 }
 
 class FakeAuctionServer {
@@ -108,7 +115,7 @@ describe('E2E: auction sniper', () =>{
 		application = new ApplicationRunner();
 	});
 
-	it('makes higher bid but loses', () => {
+	it('makes a higher bid but loses', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
@@ -119,6 +126,22 @@ describe('E2E: auction sniper', () =>{
 
 			.then(() => auction.announceClosed())
 			.then(() => application.showsSniperHasLostAuction());
+	});
+
+	it('makes a higher bid and wins', () => {
+		return auction.startSellingItem()
+			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
+
+			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
+			.then(() => application.hasShownSniperIsBidding())
+			.then(() => auction.hasReceivedBid(1098, SNIPER_ID))
+
+			.then(() => auction.reportPrice(1098, 97, SNIPER_ID))
+			.then(() => application.hasShownSniperIsWinning())
+
+			.then(() => auction.announceClosed())
+			.then(() => application.showsSniperHasWonAuction());
 	});
 
 	it('joins an auction untill it closes', () => {

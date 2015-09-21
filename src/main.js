@@ -17,7 +17,7 @@ function main(){
 	var auction = new Auction(itemToSnipe);
 
 	var sniper = new AuctionSniper(auction, display.listener);
-	var translator = new AuctionMessageTranslator(sniper);
+	var translator = new AuctionMessageTranslator(SNIPER_ID, sniper);
 	subscriber.on('message', translator.processMessage);
 	auction.join();
 }

@@ -3,12 +3,24 @@ var SNIPER_ID = 'sniper';
 
 export default function AuctionSniper(auction, listener){
 
+	const priceSource = {
+		FROM_OTHER_BIDDER: 'someone else',
+		FROM_SNIPER: 'sniper'
+	};
+
 	this.auctionClosed = function auctionClosed(){
 		listener.sniperLost();
 	};
 
-	this.currentPrice = function currentPrice(price, increment){
-		auction.bid(SNIPER_ID, price + increment);
-		listener.sniperBidding();
+	this.currentPrice = function currentPrice(price, increment, bidder){
+		switch (bidder) {
+			case priceSource.FROM_SNIPER:
+				listener.sniperWinning();
+				break;
+			case priceSource.FROM_OTHER_BIDDER:
+				auction.bid(SNIPER_ID, price + increment);
+				listener.sniperBidding();
+				break;
+		}
 	};
 }

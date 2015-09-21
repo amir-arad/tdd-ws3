@@ -1,6 +1,15 @@
 require('source-map-support').install();
 
-export default function AuctionMessageTranslator(listener){
+const priceSource = {
+	FROM_OTHER_BIDDER: 'someone else',
+	FROM_SNIPER: 'sniper'
+};
+
+export default function AuctionMessageTranslator(sniperId, listener){
+
+	function isFrom(bidder) {
+		return sniperId === bidder ? priceSource.FROM_SNIPER : priceSource.FROM_OTHER_BIDDER;
+	}
 
 	this.processMessage = function processMessage(channel, message){
 		const parsedMessage = JSON.parse(message);
@@ -10,7 +19,7 @@ export default function AuctionMessageTranslator(listener){
 					listener.auctionClosed();
 					break;
 				case 'price':
-					listener.currentPrice(parsedMessage.price, parsedMessage.increment, parsedMessage.bidder);
+					listener.currentPrice(parsedMessage.price, parsedMessage.increment, isFrom(parsedMessage.bidder));
 					break;
 				default:
 					throw new Error('wtf ' + parsedMessage.event);
@@ -18,3 +27,5 @@ export default function AuctionMessageTranslator(listener){
 		}
 	}
 }
+
+export const priceSource;
