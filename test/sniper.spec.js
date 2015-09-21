@@ -3,6 +3,7 @@ var assert = require('chai').assert;
 var sinon = require('sinon');
 var AuctionSniper = require('../src/AuctionSniper');
 var SNIPER_ID = 'sniper';
+const ITEM_ID = 'item-5347';
 
 
 describe('auction sniper', () => {
@@ -12,6 +13,7 @@ describe('auction sniper', () => {
 	let priceSource;
 	beforeEach('init mock listener', ()=>{
 		mockAuction = {
+			itemId: ITEM_ID,
 			bid : sinon.spy()
 		};
 		mockListener = {
@@ -52,6 +54,7 @@ describe('auction sniper', () => {
 		assert(mockAuction.bid.calledOnce, 'auction.bid not called once');
 		assert(mockAuction.bid.calledWithExactly(SNIPER_ID, price + increment), 'auction.bid not called with right arguments');
 		assert(mockListener.sniperBidding.calledOnce, 'listener.sniperBidding not called once');
+		assert(mockListener.sniperBidding.calledWithExactly(ITEM_ID, price, price + increment), 'listener.sniperBidding not called with right arguments');
 	});
 
 	it('reports is winning when current price comes from sniper', function () {

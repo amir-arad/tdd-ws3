@@ -3,6 +3,7 @@ require('source-map-support').install();
 var redis = require('then-redis');
 
 export default function Auction(itemId){
+	this.itemId = itemId;
 	let publisher;
 
 	this.join = function join(){

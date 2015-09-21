@@ -33,26 +33,27 @@ class AuctionSniperDriver{
 }
 
 class ApplicationRunner {
-	startBiddingIn(auction) {
+	startBiddingIn(itemId) {
+		this.itemId = itemId;
 		this.driver = new AuctionSniperDriver();
 		// start main program with some arguments
-		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, (error,stdout) => {
+		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + itemId, (error,stdout) => {
 			console.log(stdout);
 			console.log(error);
 		});
-		return this.driver.showsSniperStatus(statuses.JOINING);
+		return this.driver.showsSniperStatus(this.itemId, statuses.JOINING);
 	}
 	showsSniperHasLostAuction () {
-		return this.driver.showsSniperStatus(statuses.LOST);
+		return this.driver.showsSniperStatus(this.itemId, statuses.LOST);
 	}
-	hasShownSniperIsBidding() {
-		return this.driver.showsSniperStatus(statuses.BIDDING);
+	hasShownSniperIsBidding(lastPrice, lastBid) {
+		return this.driver.showsSniperStatus(this.itemId, lastPrice, lastBid, statuses.BIDDING);
 	}
-	hasShownSniperIsWinning() {
-		return this.driver.showsSniperStatus(statuses.WINNING);
+	hasShownSniperIsWinning(winningBid) {
+		return this.driver.showsSniperStatus(this.itemId, winningBid, statuses.WINNING);
 	}
-	showsSniperHasWonAuction() {
-		return this.driver.showsSniperStatus(statuses.WON);
+	showsSniperHasWonAuction(lastPrice) {
+		return this.driver.showsSniperStatus(this.itemId, lastPrice, statuses.WON);
 	}
 	stop(){
 		 this.runningServer.kill('SIGINT');
@@ -127,14 +128,14 @@ describe('E2E: auction sniper', () =>{
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 
 			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
-			.then(() => application.hasShownSniperIsBidding())
+			.then(() => application.hasShownSniperIsBidding(1000, 1098))
 			.then(() => auction.hasReceivedBid(1098, SNIPER_ID))
 
 			.then(() => auction.reportPrice(1098, 97, SNIPER_ID))
-			.then(() => application.hasShownSniperIsWinning())
+			.then(() => application.hasShownSniperIsWinning(1098))
 
 			.then(() => auction.announceClosed())
-			.then(() => application.showsSniperHasWonAuction());
+			.then(() => application.showsSniperHasWonAuction(1098));
 	});
 
 	it('joins an auction untill it closes', () => {

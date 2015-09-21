@@ -27,7 +27,7 @@ export default function AuctionSniper(auction, listener){
 			case priceSource.FROM_OTHER_BIDDER:
 				isWinning = false;
 				auction.bid(SNIPER_ID, price + increment);
-				listener.sniperBidding();
+				listener.sniperBidding(auction.itemId, price, price + increment);
 				break;
 		}
 	};
