@@ -1,10 +1,9 @@
 require('source-map-support').install();
 var assert = require('chai').assert;
 var sinon = require('sinon');
-var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
+import {default as AuctionMessageTranslator, priceSource} from '../src/AuctionMessageTranslator';
 
 const SNIPER_ID = 'sniper';
-const priceSource = AuctionMessageTranslator.priceSource;
 
 describe('auction message translator', () => {
 	const UNUSED_CHANNEL = null;

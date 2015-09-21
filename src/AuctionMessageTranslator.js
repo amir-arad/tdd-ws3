@@ -1,9 +1,5 @@
 require('source-map-support').install();
 
-const priceSource = {
-	FROM_OTHER_BIDDER: 'someone else',
-	FROM_SNIPER: 'sniper'
-};
 
 export default function AuctionMessageTranslator(sniperId, listener){
 
@@ -28,4 +24,7 @@ export default function AuctionMessageTranslator(sniperId, listener){
 	}
 }
 
-export const priceSource;
+export var priceSource = {
+	FROM_OTHER_BIDDER: 'someone else',
+	FROM_SNIPER: 'sniper'
+};

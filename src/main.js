@@ -1,6 +1,6 @@
 require('source-map-support').install();
 var sourcemaps = require("gulp-sourcemaps");
-var AuctionMessageTranslator = require('./AuctionMessageTranslator');
+import AuctionMessageTranslator from './AuctionMessageTranslator';
 var AuctionSniper = require('./AuctionSniper');
 var redis = require('then-redis');
 var Auction = require('./Auction');

@@ -37,7 +37,7 @@ describe('auction sniper', () => {
 		sniper.currentPrice(price, increment, priceSource.FROM_OTHER_BIDDER);
 
 		assert(mockAuction.bid.calledOnce, 'auction.bid not called once');
-		assert(mockAuction.bid.calledWithExactly(SNIPER_ID, price + increment, priceSource.FROM_OTHER_BIDDER), 'auction.bid not called with right arguments');
+		assert(mockAuction.bid.calledWithExactly(SNIPER_ID, price + increment), 'auction.bid not called with right arguments');
 		assert(mockListener.sniperBidding.calledOnce, 'listener.sniperBidding not called once');
 	});
 
